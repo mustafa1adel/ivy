@@ -2,6 +2,7 @@
 import math
 import itertools
 from typing import Optional, Union, Tuple, Literal, Sequence
+from functools import reduce
 
 # local
 import ivy
@@ -11,6 +12,7 @@ from ivy.func_wrapper import (
     to_native_arrays_and_back,
     handle_nestable,
     integer_arrays_to_float,
+    inputs_to_ivy_arrays,
 )
 from ivy.utils.exceptions import handle_exceptions
 
@@ -28,7 +30,8 @@ def max_pool1d(
     data_format: str = "NWC",
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 1-D max pool given 3-D input x.
+    """
+    Compute a 1-D max pool given 3-D input x.
 
     Parameters
     ----------
@@ -92,7 +95,8 @@ def max_pool2d(
     ceil_mode: bool = False,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 2-D max pool given 4-D input x.
+    """
+    Compute a 2-D max pool given 4-D input x.
 
     Parameters
     ----------
@@ -170,7 +174,8 @@ def max_pool3d(
     data_format: str = "NDHWC",
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 3-D max pool given 5-D input x.
+    """
+    Compute a 3-D max pool given 5-D input x.
 
     Parameters
     ----------
@@ -220,7 +225,6 @@ def max_pool3d(
 
 
         [[[46., 47.]]]]])
-
     """
     return ivy.current_backend(x).max_pool3d(
         x, kernel, strides, padding, data_format=data_format, out=out
@@ -238,9 +242,13 @@ def avg_pool1d(
     /,
     *,
     data_format: str = "NWC",
+    count_include_pad: bool = False,
+    ceil_mode: bool = False,
+    division_override: Optional[int] = None,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 1-D avg pool given 3-D input x.
+    """
+    Compute a 1-D avg pool given 3-D input x.
 
     Parameters
     ----------
@@ -256,6 +264,13 @@ def avg_pool1d(
         indicating the per-dimension paddings.
     data_format
         NWC" or "NCW". Defaults to "NWC".
+    count_include_pad
+        Whether to include padding in the averaging calculation.
+    ceil_mode
+        Whether to use ceil or floor for creating the output shape.
+    division_override
+        If specified, it will be used as the divisor,
+        otherwise kernel_size will be used.
     out
         optional output array, for writing the result to.
 
@@ -285,7 +300,15 @@ def avg_pool1d(
            [[14., 15., 16., 17.]]])
     """
     return ivy.current_backend(x).avg_pool1d(
-        x, kernel, strides, padding, data_format=data_format, out=out
+        x,
+        kernel,
+        strides,
+        padding,
+        data_format=data_format,
+        count_include_pad=count_include_pad,
+        ceil_mode=ceil_mode,
+        division_override=division_override,
+        out=out,
     )
 
 
@@ -300,9 +323,12 @@ def avg_pool2d(
     /,
     *,
     data_format: str = "NHWC",
+    count_include_pad: bool = False,
+    ceil_mode: bool = False,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 2-D average pool given 4-D input x.
+    """
+    Compute a 2-D average pool given 4-D input x.
 
     Parameters
     ----------
@@ -318,6 +344,10 @@ def avg_pool2d(
         indicating the per-dimensio paddings.
     data_format
         NHWC" or "NCHW". Defaults to "NHWC".
+    count_include_pad
+        Whether to include padding in the averaging calculation.
+    ceil_mode
+        Whether to use ceil or floor for creating the output shape.
     out
         optional output array, for writing the result to.
 
@@ -353,10 +383,16 @@ def avg_pool2d(
        [[[32., 33.]],
 
         [[38., 39.]]]])
-
     """
     return ivy.current_backend(x).avg_pool2d(
-        x, kernel, strides, padding, data_format=data_format, out=out
+        x,
+        kernel,
+        strides,
+        padding,
+        data_format=data_format,
+        count_include_pad=count_include_pad,
+        ceil_mode=ceil_mode,
+        out=out,
     )
 
 
@@ -371,9 +407,13 @@ def avg_pool3d(
     /,
     *,
     data_format: str = "NDHWC",
+    count_include_pad: bool = False,
+    ceil_mode: bool = False,
+    divisor_override: Optional[int] = None,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Computes a 3-D avg pool given 5-D input x.
+    """
+    Compute a 3-D avg pool given 5-D input x.
 
     Parameters
     ----------
@@ -388,6 +428,12 @@ def avg_pool3d(
         paddings.
     data_format
         NDHWC" or "NCDHW". Defaults to "NDHWC".
+    count_include_pad
+        Whether to include padding in the averaging calculation.
+    ceil_mode
+        Whether to use ceil or floor for creating the output shape.
+    divisor_override
+        If specified, it will be used as divisor, otherwise kernel_size will be used.
     out
         optional output array, for writing the result to. It must have a shape that the
         inputs broadcast to.
@@ -423,10 +469,17 @@ def avg_pool3d(
 
 
             [[[43., 44.]]]]])
-
     """
     return ivy.current_backend(x).avg_pool3d(
-        x, kernel, strides, padding, data_format=data_format, out=out
+        x,
+        kernel,
+        strides,
+        padding,
+        data_format=data_format,
+        count_include_pad=count_include_pad,
+        ceil_mode=ceil_mode,
+        divisor_override=divisor_override,
+        out=out,
     )
 
 
@@ -445,7 +498,8 @@ def dct(
     norm: Optional[Literal["ortho"]] = None,
     out: Optional[Union[ivy.Array, ivy.NativeArray]] = None,
 ) -> Union[ivy.Array, ivy.NativeArray]:
-    """Computes the 1D Discrete Cosine Tranformation of a given signal.
+    """
+    Compute the 1D Discrete Cosine Tranformation of a given signal.
 
     Parameters
     ----------
@@ -541,8 +595,9 @@ def fft(
     n: Optional[Union[int, Tuple[int]]] = None,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    r"""Computes the one dimensional discrete Fourier transform given input at least
-    1-D input x.
+    r"""
+    Compute the one dimensional discrete Fourier transform given input at least 1-D
+    input x.
 
     Parameters
     ----------
@@ -607,10 +662,11 @@ def dropout1d(
     data_format: str = "NWC",
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Randomly zero out entire channels with probability prob using samples from
-     a Bernoulli distribution and the remaining channels are scaled by (1/1-prob).
-     In this case, dropout1d performs a channel-wise dropout but assumes
-     a channel is a 1D feature map.
+    """
+    Randomly zero out entire channels with probability prob using samples from a
+    Bernoulli distribution and the remaining channels are scaled by (1/1-prob). In this
+    case, dropout1d performs a channel-wise dropout but assumes a channel is a 1D
+    feature map.
 
     Parameters
     ----------
@@ -679,10 +735,11 @@ def dropout3d(
     data_format: str = "NDHWC",
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Randomly zero out entire channels with probability prob using samples from
-     a Bernoulli distribution and the remaining channels are scaled by (1/1-prob).
-     In this case, dropout3d performs a channel-wise dropout but assumes
-     a channel is a 1D feature map.
+    """
+    Randomly zero out entire channels with probability prob using samples from a
+    Bernoulli distribution and the remaining channels are scaled by (1/1-prob). In this
+    case, dropout3d performs a channel-wise dropout but assumes a channel is a 1D
+    feature map.
 
     Parameters
     ----------
@@ -708,7 +765,6 @@ def dropout3d(
     Both the description and the type hints above assumes an array input for simplicity,
     but this function is *nestable*, and therefore also accepts :class:`ivy.Container`
     instances in place of any of the arguments.
-
     """
     return ivy.current_backend(x).dropout3d(
         x, prob, training=training, data_format=data_format, out=out
@@ -728,8 +784,9 @@ def ifft(
     n: Optional[Union[int, Tuple[int]]] = None,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    r"""Computes the one dimensional discrete Fourier transform given input at least
-    1-D input x.
+    r"""
+    Compute the one dimensional discrete Fourier transform given input at least 1-D
+    input x.
 
     Parameters
     ----------
@@ -781,7 +838,6 @@ def ifft(
     return ivy.current_backend(x).ifft(x, dim, norm=norm, n=n, out=out)
 
 
-@to_native_arrays_and_back
 @handle_out_argument
 @handle_nestable
 @handle_exceptions
@@ -793,7 +849,8 @@ def embedding(
     max_norm: Optional[int] = None,
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
-    """Embeds a given tensor of indices using a given tensor of weights.
+    """
+    Embeds a given tensor of indices using a given tensor of weights.
 
     Parameters
     ----------
@@ -831,12 +888,14 @@ def embedding(
         indices = ivy.array(indices, dtype=ivy.int32)
 
     for i, x in ivy.ndenumerate(indices):
-
         if ivy.exists(max_norm):
             ret[i] = ivy.clip_vector_norm(weights[x, :], max_norm)
         else:
             ret[i] = weights[x, :]
     return ret
+
+
+embedding.mixed_function = True
 
 
 @to_native_arrays_and_back
@@ -855,7 +914,7 @@ def dft(
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
     """
-        Computes the discrete Fourier transform of input.
+    Compute the discrete Fourier transform of input.
 
     Parameters
     ----------
@@ -904,7 +963,6 @@ def dft(
         If axis=N-1 and onesided is True, the following shape is expected:
         [batch_idx][signal_dim1][signal_dim2]…[floor(signal_dimN/2)+1][2].
         The signal_dim at the specified axis is equal to the dft_length.
-
     """
     if inverse:
         res = ifft(x, axis, norm=norm, n=dft_length, out=out)
@@ -918,7 +976,7 @@ def dft(
     return res
 
 
-@to_native_arrays_and_back
+@inputs_to_ivy_arrays
 @handle_out_argument
 @handle_nestable
 @handle_exceptions
@@ -1122,7 +1180,17 @@ def _dim_scale_factor(input_size, output_size, align_corners, scales):
     return dim_scale_factor
 
 
-def compute_weight_mat(
+def _mitchellcubic_kernel(x):
+    absx = abs(x)
+    if absx < 1:
+        return (7 * absx**3 - 12 * absx**2 + 6) / 6
+    elif absx < 2:
+        return (-(absx**3) + 6 * absx**2 - 11 * absx + 6) / 6
+    else:
+        return 0
+
+
+def _compute_weight_mat(
     input_size,
     output_size,
     scale,
@@ -1163,6 +1231,7 @@ def compute_weight_mat(
         0,
     )
 
+
 def _upsample_cubic_convolution1(x, A):
     return ((A + 2) * x - (A + 3)) * x * x + 1
 
@@ -1185,10 +1254,12 @@ def _upsample_cubic_interp1d(coeffs, ts):
     coeffs2 = _upsample_get_cubic_coefficients(ts)
     return _sum_tensors(c1 * c2 for (c1, c2) in zip(coeffs, coeffs2))
 
+
 def _sum_tensors(ts):
     return reduce(ivy.add, ts)
 
-def upsample_bicubic2d_default(
+
+def _upsample_bicubic2d_default(
     a,
     output_size,
     align_corners,
@@ -1261,7 +1332,7 @@ def interpolate(
         "area",
         "nearest_exact",
         "tf_area",
-        "bicubic_tensorflow"
+        "bicubic_tensorflow",
         "bicubic",
         "mitchellcubic",
         "lanczos3",
@@ -1275,8 +1346,8 @@ def interpolate(
     out: Optional[ivy.Array] = None,
 ) -> ivy.Array:
     """
-    Down/up samples the input to the given size.
-    The algorithm used for interpolation is determined by mode.
+    Down/up samples the input to the given size. The algorithm used for interpolation is
+    determined by mode.
 
     Parameters
     ----------
@@ -1318,42 +1389,7 @@ def interpolate(
     Returns
     -------
         resized array
-
     """
-
-    def bicubic_kernel(s, a=-0.5):
-        abs_s = abs(s)
-        if (abs_s >= 0) & (abs_s <= 1):
-            return (a + 2) * (abs_s**3) - (a + 3) * (abs_s**2) + 1
-        elif (abs_s > 1) & (abs_s <= 2):
-            return a * (abs_s**3) - (5 * a) * (abs_s**2) + (8 * a) * abs_s - 4 * a
-        return 0
-
-    def mitchellcubic_kernel(s, b=1 / 3, c=1 / 3):
-        abs_s = abs(s)
-        abs_s_2 = abs_s**2
-        abs_s_3 = abs_s**3
-        return ivy.where(
-            abs_s <= 1,
-            (
-                (12 - 9 * b - 6 * c) * abs_s_3
-                + (-18 + 12 * b + 6 * c) * abs_s_2
-                + (6 - 2 * b)
-            )
-            / 6,
-            ivy.where(
-                abs_s <= 2,
-                (
-                    (-1 * b - 6 * c) * abs_s_3
-                    + (6 * b + 30 * c) * abs_s_2
-                    + (-12 * b - 48 * c) * abs_s
-                    + (8 * b + 24 * c)
-                )
-                / 6,
-                ivy.zeros_like(s),
-            ),
-        )
-
     input_shape = ivy.shape(x)
     dims = len(input_shape) - 2
     size = _get_size(scale_factor, size, dims, x.shape)
@@ -1388,10 +1424,8 @@ def interpolate(
             equation = "ijkl,km,ln->ijmn"
         elif mode == "trilinear" or dims == 3:
             equation = "ijklm,kn,lo,mp->ijnop"
-
         if mode == "bicubic_tensorflow":
             kernel_func = lambda inputs: _cubic_kernel(inputs)
-
         if mode == "lanczos3":
             kernel_func = lambda inputs: _lanczos_kernel(3, inputs)
         elif mode == "lanczos5":
@@ -1407,7 +1441,7 @@ def interpolate(
                 align_corners,
                 scale_factor[i] if scale_factor is not None else None,
             )
-            w = compute_weight_mat(
+            w = _compute_weight_mat(
                 m, n, scale[i], align_corners, kernel_func, antialias, dim_scale_factor
             ).astype(x.dtype)
             operands.append(w)
@@ -1476,42 +1510,93 @@ def interpolate(
                             1 / scale_x
                         )
     elif mode == "bicubic":
-        return upsample_bicubic2d_default(x, size, align_corners)
-    elif mode in ["mitchellcubic", "gaussian"]:
-        if mode == "mitchellcubic":
-            kernel_size_h = 3 * size[0]
-            kernel_size_w = 3 * size[1]
-            kernel_h = mitchellcubic_kernel(ivy.linspace(-1, 1, kernel_size_h))
-            kernel_w = mitchellcubic_kernel(ivy.linspace(-1, 1, kernel_size_w))
-            kernel = ivy.outer(kernel_h, kernel_w)
-        else:
-            kernel_size_h = size[0] // 10 * 2 + 1
-            kernel_size_w = size[1] // 10 * 2 + 1
-            sigma_h = 0.3 * ((kernel_size_h - 1) * 0.5 - 1) + 0.8
-            sigma_w = 0.3 * ((kernel_size_w - 1) * 0.5 - 1) + 0.8
-            kernel = ivy.array(
-                [
+        return _upsample_bicubic2d_default(x, size, align_corners)
+    elif mode == "mitchellcubic":
+        batch, channels, in_height, in_width = x.shape
+        out_height, out_width = size
+        scale_factor_h = out_height / in_height
+        scale_factor_w = out_width / in_width
+        ret = ivy.zeros((batch, channels, out_height, out_width))
+        for i in range(out_height):
+            for j in range(out_width):
+                p_i = i / scale_factor_h
+                p_j = j / scale_factor_w
+                left = int(math.floor(p_j - 2))
+                right = int(math.ceil(p_j + 2))
+                top = int(math.floor(p_i - 2))
+                bottom = int(math.ceil(p_i + 2))
+                kernel_w = ivy.array(
                     [
-                        math.exp(-(i**2 + j**2) / (sigma_h**2 + sigma_w**2))
-                        for i in range(-(kernel_size_h // 2), kernel_size_h // 2 + 1)
+                        _mitchellcubic_kernel((p_j - j) / scale_factor_w)
+                        for i in range(left, right)
                     ]
-                    for j in range(-(kernel_size_w // 2), kernel_size_w // 2 + 1)
+                )
+                kernel_h = ivy.array(
+                    [
+                        _mitchellcubic_kernel((p_i - i) / scale_factor_h)
+                        for j in range(top, bottom)
+                    ]
+                )
+                left_pad = max(0, -left)
+                right_pad = max(0, right - in_width)
+                top_pad = max(0, -top)
+                bottom_pad = max(0, bottom - in_height)
+                pad_width = [(0, 0), (0, 0)] * (len(x.shape) - 3) + [
+                    (top_pad, bottom_pad),
+                    (left_pad, right_pad),
                 ]
-            )
-        kernel = kernel / kernel.sum()
-        padding = (kernel_size_h // 2, kernel_size_w // 2)
-        x = ivy.pad(x, ((0, 0), (0, 0), padding, padding), mode="reflect")
-        x = ivy.conv2d(
-            x,
-            ivy.expand_dims(ivy.expand_dims(kernel, axis=-1), axis=-1),
-            1,
-            ((0, 0), (0, 0)),
-            data_format="NCHW",
-        )
-        return interpolate(x, size, mode="bicubic", align_corners=True)
+                padded_x = ivy.pad(x, pad_width, mode="edge")
+                for b in range(batch):
+                    for c in range(channels):
+                        patch = padded_x[
+                            b,
+                            c,
+                            top + top_pad : bottom + top_pad,
+                            left + left_pad : right + left_pad,
+                        ]
+                        ret[b, c, i, j] = ivy.sum(
+                            kernel_h[:, ivy.newaxis] * patch * kernel_w[ivy.newaxis, :]
+                        )
+    elif mode == "gaussian":
+        ratio_h = size[0] / x.shape[-2]
+        ratio_w = size[1] / x.shape[-1]
+        sigma = max(1 / ratio_h, 1 / ratio_w) * 0.5
+        kernel_size = 2 * int(math.ceil(3 * sigma)) + 1
+        kernel_h = ivy.zeros((kernel_size,), dtype=x.dtype)
+        kernel_w = ivy.zeros((kernel_size,), dtype=x.dtype)
+        for i in range(kernel_h.size):
+            kernel_h[i] = ivy.exp(-0.5 * ((i - kernel_h.size // 2) / sigma) ** 2)
+            kernel_w[i] = ivy.exp(-0.5 * ((i - kernel_w.size // 2) / sigma) ** 2)
+        kernel_h /= ivy.sum(kernel_h)
+        kernel_w /= ivy.sum(kernel_w)
+        pad_width = [(0, 0), (0, 0)] * (len(x.shape) - 3) + [
+            (int(math.ceil(3 * sigma)), int(math.ceil(3 * sigma))),
+            (int(math.ceil(3 * sigma)), int(math.ceil(3 * sigma))),
+        ]
+        padded_x = ivy.pad(x, pad_width, mode="constant")
+        output_shape = x.shape[:2] + size
+        ret = ivy.zeros(output_shape, dtype=x.dtype)
+        for i in range(size[0]):
+            for j in range(size[1]):
+                p_i = int(math.floor(i / ratio_h + int(math.ceil(3 * sigma))))
+                p_j = int(math.floor(j / ratio_w + int(math.ceil(3 * sigma))))
+                for b in range(x.shape[0]):
+                    for c in range(x.shape[1]):
+                        patch = padded_x[
+                            b,
+                            c,
+                            p_i - kernel_size // 2 : p_i + kernel_size // 2 + 1,
+                            p_j - kernel_size // 2 : p_j + kernel_size // 2 + 1,
+                        ]
+                        ret[b, c, i, j] = ivy.sum(
+                            kernel_h[ivy.newaxis, :] * patch * kernel_w[:, ivy.newaxis]
+                        )
     elif mode == "tf_area":
         ret = _tf_area_interpolate(x, size, dims)
     return ivy.astype(ret, ivy.dtype(x), out=out)
+
+
+interpolate.mixed_function = True
 
 
 def _get_size(scale_factor, size, dims, x_shape):
@@ -1529,15 +1614,13 @@ def _get_size(scale_factor, size, dims, x_shape):
     return size
 
 
-interpolate.mixed_function = True
-
-
 def _output_ceil_shape(w, f, p, s):
     return math.ceil((w - f + p) / s) + 1
 
 
-def _padding_ceil_mode(w, f, p, s):
+def _padding_ceil_mode(w, f, p, s, return_added_padding=False):
     remaining_pixels = (w - f + sum(p)) % s
+    added_padding = 0
     if s > 1 and remaining_pixels != 0 and f > 1:
         input_size = w + sum(p)
         # making sure that the remaining pixels are supposed
@@ -1554,10 +1637,13 @@ def _padding_ceil_mode(w, f, p, s):
         # calculating new padding with ceil_output_shape
         new_pad = (output_shape - 1) * s + f - w
         # updating pad_list with new padding by adding it to the end
+        added_padding = new_pad - sum(p)
         p = (
             p[0],
-            p[1] + new_pad - sum(p),
+            p[1] + added_padding,
         )
+    if return_added_padding:
+        return p, added_padding
     return p
 
 
@@ -1605,12 +1691,13 @@ def _mask(vals, length, range_max, dim):
         return vals, length
 
 
+@handle_nestable
 def adaptive_avg_pool1d(
     input: Union[ivy.Array, ivy.NativeArray],
     output_size: int,
 ) -> ivy.Array:
     """
-    Applies a 1D adaptive average pooling over an input signal composed of several input
+    Apply a 1D adaptive average pooling over an input signal composed of several input
     planes.
 
     Parameters
@@ -1626,7 +1713,6 @@ def adaptive_avg_pool1d(
     -------
         The result of the pooling operation. Will have shape (N, C, L_out) or
         (C, L_out), where L_out = `output_size`
-
     """
     squeeze = False
     if len(input.shape) == 2:
@@ -1672,12 +1758,16 @@ def adaptive_avg_pool1d(
     return pooled_output
 
 
+adaptive_avg_pool1d.mixed_function = True
+
+
+@handle_nestable
 def adaptive_avg_pool2d(
     input: Union[ivy.Array, ivy.NativeArray],
     output_size: Union[Sequence[int], int],
 ) -> ivy.Array:
     """
-    Applies a 2D adaptive average pooling over an input signal composed of several input
+    Apply a 2D adaptive average pooling over an input signal composed of several input
     planes.
 
     Parameters
@@ -1693,7 +1783,6 @@ def adaptive_avg_pool2d(
     -------
         The result of the pooling operation. Will have shape (N, C, S_0, S_1) or
         (C, S_0, S_1), where S = `output_size`
-
     """
     squeeze = False
     if len(input.shape) == 3:
@@ -1747,3 +1836,6 @@ def adaptive_avg_pool2d(
     if squeeze:
         return ivy.squeeze(pooled_output, axis=0)
     return pooled_output
+
+
+adaptive_avg_pool2d.mixed_function = True

@@ -72,7 +72,6 @@ def arange(
 
 
 def _stack_tensors(x, dtype):
-
     # TODO: change paddle.stack to ivy.stack
     if isinstance(x, (list, tuple)) and len(x) != 0 and isinstance(x[0], (list, tuple)):
         for i, item in enumerate(x):
@@ -101,6 +100,7 @@ def asarray(
         bool,
         int,
         float,
+        list,
         NestedSequence,
         SupportsBufferProtocol,
     ],
@@ -145,9 +145,9 @@ def asarray(
 
     elif isinstance(obj, (Number, bool, complex)):
         if dtype is None:
-            dtype = ivy.promote_types(type(obj), type(obj))
-        ret = paddle.to_tensor(obj).squeeze().cast(dtype)
-        return ret
+            dtype = ivy.default_dtype(item=obj)
+        with ivy.ArrayMode(False):
+            return ivy.squeeze(paddle.to_tensor(obj, dtype=dtype), 0)
 
     else:
         dtype = ivy.as_native_dtype((ivy.default_dtype(dtype=dtype, item=obj)))
@@ -240,6 +240,10 @@ def full(
     device: Place,
     out: Optional[paddle.Tensor] = None,
 ) -> paddle.Tensor:
+    if dtype is None:
+        dtype = ivy.default_dtype(item=fill_value)
+    if not isinstance(shape, Sequence):
+        shape = [shape]
     return to_device(
         paddle.full(shape=shape, fill_value=fill_value).cast(dtype), device
     )
@@ -257,9 +261,7 @@ def full_like(
     device: Place,
     out: Optional[paddle.Tensor] = None,
 ) -> paddle.Tensor:
-    return to_device(
-        paddle.full_like(x=x.cast("float32"), fill_value=fill_value).cast(dtype), device
-    )
+    return full(shape=x.shape, fill_value=fill_value, dtype=dtype, device=device)
 
 
 def _linspace_helper(start, stop, num, axis=None, *, dtype=None):
@@ -435,12 +437,17 @@ def meshgrid(
     *arrays: paddle.Tensor,
     sparse: bool = False,
     indexing: str = "xy",
+    out: Optional[paddle.Tensor] = None,
 ) -> List[paddle.Tensor]:
     if not sparse:
         if indexing == "ij":
             return paddle.meshgrid(*arrays)
         elif indexing == "xy":
-            return paddle.meshgrid(*arrays[::-1])[::-1]
+            with ivy.ArrayMode(False):
+                index_switch = lambda x: ivy.swapaxes(x, 0, 1) if x.ndim > 1 else x
+                arrays = list(map(index_switch, arrays))
+                ret = paddle.meshgrid(*arrays)
+                return list(map(index_switch, ret))
         else:
             raise ValueError(f"indexing must be either 'ij' or 'xy', got {indexing}")
 
@@ -449,7 +456,6 @@ def meshgrid(
         paddle.reshape(paddle.to_tensor(a), (sd[:i] + (-1,) + sd[i + 1 :]))
         for i, a in enumerate(arrays)
     ]
-
     if indexing == "xy" and len(arrays) > 1:
         res[0] = paddle.reshape(res[0], (1, -1) + sd[2:])
         res[1] = paddle.reshape(res[1], (-1, 1) + sd[2:])
@@ -576,7 +582,6 @@ def copy_array(
     if to_ivy_array:
         return ivy.to_ivy(x.clone())
     return x.clone()
-    # raise IvyNotImplementedException()
 
 
 @with_unsupported_device_and_dtypes(
